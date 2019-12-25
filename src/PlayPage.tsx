@@ -13,6 +13,7 @@ interface State {
    streak: number,
    randomIndeces: Array<number>,
    borderColors: Array<string>,
+   selectedBreedName: string,
    selectedDogIndex: number,
    selected: boolean
 }
@@ -33,6 +34,7 @@ class PlayPage extends Component<Props, State> {
          score: 0,
          rounds: 0,
          streak: 0,
+         selectedBreedName: '',
          borderColors: [],
          dogImages: [],
          randomIndeces: []
@@ -94,8 +96,9 @@ class PlayPage extends Component<Props, State> {
          dogImages.push(dogImage)
          borderColors.push('');
       }
+      let selectedBreedName = this.state.dogs[randomIndeces[this.state.selectedDogIndex]];
       let selected = false;
-      this.setState({ dogImages, borderColors, selected, selectedDogIndex })
+      this.setState({ dogImages, borderColors, selected, selectedDogIndex, selectedBreedName })
    }
 
    printDogImages = (images: Array<string>) => {      //The component to print the dog images
@@ -148,9 +151,18 @@ class PlayPage extends Component<Props, State> {
             </Row>
             <Row className="justify-content-center">
                <h6>
-                  Accuracy: {this.state.rounds === 0 ? 0 : this.state.score / this.state.rounds * 100}%
+                  Accuracy: {this.state.rounds === 0 ? 0 : (this.state.score / this.state.rounds * 100).toFixed(2)}%
                </h6>
             </Row>
+            { this.state.selectedBreedName === '' ?
+               <></>
+               :
+               <Row className="justify-content-center">
+                  <h6>
+                     Breed: {this.state.selectedBreedName}
+                  </h6>
+               </Row>
+            }
          </Col>
       );
    }
