@@ -1,9 +1,6 @@
 import React, { Component } from 'react'
 import Navbar from 'react-bootstrap/Navbar';
 import { Link } from 'react-router-dom';
-//import { faHome, faAddressCard, faEnvelope, faSignOutAlt, faSignInAlt, faUserPlus } from "@fortawesome/free-solid-svg-icons";
-//import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import Logo from './logo.png'
 
 
 class NavBar extends Component {
