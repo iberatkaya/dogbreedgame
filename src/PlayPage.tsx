@@ -11,6 +11,7 @@ interface State {
    score: number,
    rounds: number,
    streak: number,
+   rows: number,
    randomIndeces: Array<number>,
    borderColors: Array<string>,
    selectedBreedName: string,
@@ -31,9 +32,10 @@ class PlayPage extends Component<Props, State> {
          dogs: [],
          selectedDogIndex: 0,
          selected: false,
-         score: 0,
-         rounds: 0,
-         streak: 0,
+         score: 9,
+         rows: 1,
+         rounds: 9,
+         streak: 9,
          selectedBreedName: '',
          borderColors: [],
          dogImages: [],
@@ -47,16 +49,11 @@ class PlayPage extends Component<Props, State> {
       //Select the required number of random numbers
       let randomnumbers = this.selectRandomNumbers();
       //Fetch the dog images from the api
-      await this.fetchDogImages(randomnumbers.randomIndeces, randomnumbers.selectedDogIndex);
+      await this.fetchDogImages(randomnumbers.randomIndeces);
    }
 
    selectRandomNumbers = () => {
-      let number = 3;      //Default is 3
-      let streak = this.state.streak;
-      while (streak >= 5 && streak % 5 >= 0) {
-         number += 3;
-         streak -= 5;
-      }
+      let number = 3 + this.state.rows * 3;
       let randomIndeces = []
       for (let i = 0; i < number; i++) {
          let random = Math.floor(Math.random() * this.state.dogs.length);      //Select a random number between 0 to the last element of the dogs array 
@@ -74,8 +71,7 @@ class PlayPage extends Component<Props, State> {
          if (push)
             randomIndeces.push(random);
       }
-      let selectedDogIndex = Math.floor(Math.random() * randomIndeces.length);
-      return { randomIndeces, selectedDogIndex };
+      return { randomIndeces };
    }
 
    fetchAllDogs = async () => {
@@ -86,7 +82,7 @@ class PlayPage extends Component<Props, State> {
       this.setState({ dogs })
    }
 
-   fetchDogImages = async (randomIndeces: Array<number>, selectedDogIndex: number) => {
+   fetchDogImages = async (randomIndeces: Array<number>) => {
       let dogImages: Array<string> = [];
       let borderColors: Array<string> = [];
       for (let i = 0; i < randomIndeces.length; i++) {      //Fetch the dog images using the random indeces
@@ -96,7 +92,8 @@ class PlayPage extends Component<Props, State> {
          dogImages.push(dogImage)
          borderColors.push('');
       }
-      let selectedBreedName = this.state.dogs[randomIndeces[this.state.selectedDogIndex]];
+      let selectedDogIndex = Math.floor(Math.random() * randomIndeces.length);
+      let selectedBreedName = this.state.dogs[randomIndeces[selectedDogIndex]];
       let selected = false;
       this.setState({ dogImages, borderColors, selected, selectedDogIndex, selectedBreedName })
    }
@@ -116,7 +113,11 @@ class PlayPage extends Component<Props, State> {
                               let selected = true;             //Stop user from selecting another image
                               let score = this.state.score + 1;    //Update score
                               let streak = this.state.streak + 1;
-                              this.setState({ borderColors, selected, rounds, score, streak })
+                              let rows = this.state.rows;
+                              if(streak % 5 === 0){
+                                 rows++;
+                              }
+                              this.setState({ borderColors, selected, rounds, score, streak, rows })
                            }
                            else {
                               let borderColors = [...this.state.borderColors];
@@ -127,7 +128,7 @@ class PlayPage extends Component<Props, State> {
                               this.setState({ borderColors, selected, rounds, streak })
                            }
                         }
-                     }} className="img-responsive" width={200} height={200} src={item} alt="dog" style={this.state.borderColors[index] === '' ? {} : { borderWidth: 6, borderRadius: 12, borderStyle: 'solid', borderColor: this.state.borderColors[index] }} />
+                     }} className="img-responsive" width={200} height={200} src={item} alt="dog" style={this.state.borderColors[index] === '' ? {cursor: 'pointer'} : { borderWidth: 6, borderRadius: 12, borderStyle: 'solid', borderColor: this.state.borderColors[index] }} />
                      {/*index === this.state.selectedDogIndex ? <p>Selected</p> : <></>*/}
                   </Col>
                )
@@ -159,7 +160,7 @@ class PlayPage extends Component<Props, State> {
                :
                <Row className="justify-content-center">
                   <h6>
-                     Breed: {this.state.selectedBreedName}
+                     Breed: {this.state.selectedBreedName[0].toUpperCase() + this.state.selectedBreedName.substring(1)}
                   </h6>
                </Row>
             }
@@ -175,7 +176,7 @@ class PlayPage extends Component<Props, State> {
                   //Select the required number of random numbers
                   let randomnumbers = this.selectRandomNumbers();
                   //Fetch the dog images from the api
-                  await this.fetchDogImages(randomnumbers.randomIndeces, randomnumbers.selectedDogIndex);
+                  await this.fetchDogImages(randomnumbers.randomIndeces);
                }}>Continue</Button>
             </Col>
          </Row>
