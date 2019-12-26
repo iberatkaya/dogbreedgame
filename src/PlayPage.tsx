@@ -2,7 +2,11 @@ import React, { Component } from 'react'
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col'
+import Spinner from 'react-bootstrap/Spinner';
 import Button from 'react-bootstrap/Button';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+import { HighScore, setHighScore } from './Actions';
 
 
 interface State {
@@ -12,6 +16,7 @@ interface State {
    rounds: number,
    streak: number,
    rows: number,
+   loading: boolean,
    randomIndeces: Array<number>,
    borderColors: Array<string>,
    selectedBreedName: string,
@@ -20,7 +25,8 @@ interface State {
 }
 
 interface Props {
-
+   highscore: {score: number},
+   setHighScore: (arg: number) => void
 }
 
 class PlayPage extends Component<Props, State> {
@@ -32,10 +38,11 @@ class PlayPage extends Component<Props, State> {
          dogs: [],
          selectedDogIndex: 0,
          selected: false,
-         score: 9,
-         rows: 1,
-         rounds: 9,
-         streak: 9,
+         score: 0,
+         rows: 0,
+         loading: true,
+         rounds: 0,
+         streak: 0,
          selectedBreedName: '',
          borderColors: [],
          dogImages: [],
@@ -94,8 +101,7 @@ class PlayPage extends Component<Props, State> {
       }
       let selectedDogIndex = Math.floor(Math.random() * randomIndeces.length);
       let selectedBreedName = this.state.dogs[randomIndeces[selectedDogIndex]];
-      let selected = false;
-      this.setState({ dogImages, borderColors, selected, selectedDogIndex, selectedBreedName })
+      this.setState({ dogImages, borderColors, selectedDogIndex, selectedBreedName })
    }
 
    printDogImages = (images: Array<string>) => {      //The component to print the dog images
@@ -104,7 +110,12 @@ class PlayPage extends Component<Props, State> {
             images.map((item, index) => {
                return (
                   <Col key={index.toString()} md={4} style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
-                     <img onClick={() => {
+                     <img 
+                        onLoad = {() => {
+                           let loading = false;
+                           this.setState({loading});
+                        }} 
+                     onClick={() => {
                         if (!this.state.selected) {
                            let rounds = this.state.rounds + 1;    //Update rounds played
                            if (this.state.selectedDogIndex === index) {         //If answer if correct
@@ -113,8 +124,11 @@ class PlayPage extends Component<Props, State> {
                               let selected = true;             //Stop user from selecting another image
                               let score = this.state.score + 1;    //Update score
                               let streak = this.state.streak + 1;
+                              let highscore = this.props.highscore.score;
+                              if(highscore < score)
+                                 this.props.setHighScore(score);
                               let rows = this.state.rows;
-                              if(streak % 5 === 0){
+                              if (streak % 5 === 0) {
                                  rows++;
                               }
                               this.setState({ borderColors, selected, rounds, score, streak, rows })
@@ -128,7 +142,7 @@ class PlayPage extends Component<Props, State> {
                               this.setState({ borderColors, selected, rounds, streak })
                            }
                         }
-                     }} className="img-responsive" width={200} height={200} src={item} alt="dog" style={this.state.borderColors[index] === '' ? {cursor: 'pointer'} : { borderWidth: 6, borderRadius: 12, borderStyle: 'solid', borderColor: this.state.borderColors[index] }} />
+                     }} className="img-responsive" width={200} height={200} src={item} alt="dog" style={this.state.borderColors[index] === '' ? { cursor: 'pointer' } : { borderWidth: 6, borderRadius: 12, borderStyle: 'solid', borderColor: this.state.borderColors[index] }} />
                      {/*index === this.state.selectedDogIndex ? <p>Selected</p> : <></>*/}
                   </Col>
                )
@@ -139,23 +153,23 @@ class PlayPage extends Component<Props, State> {
 
    printScore = () => {
       return (
-         <Col>
+         <Col className="mb-4">
             <Row className="justify-content-center">
-               <h6 style={{ textAlign: 'center' }}>
+               <h6 style={{ marginRight: '1rem' }}>
                   Score: {this.state.score}
                </h6>
-            </Row>
-            <Row className="justify-content-center">
-               <h6 style={{ textAlign: 'center' }}>
+               <h6>
                   Streak: {this.state.streak}
                </h6>
             </Row>
             <Row className="justify-content-center">
+            </Row>
+            <Row className="justify-content-center">
                <h6>
-                  Accuracy: {this.state.rounds === 0 ? 0 : (this.state.score / this.state.rounds * 100).toFixed(2)}%
+                  Accuracy: {this.state.rounds === 0 ? 0 : (this.state.score / this.state.rounds * 100).toFixed(0)}%
                </h6>
             </Row>
-            { this.state.selectedBreedName === '' ?
+            {this.state.loading ?
                <></>
                :
                <Row className="justify-content-center">
@@ -172,11 +186,13 @@ class PlayPage extends Component<Props, State> {
       return (
          <Row style={{ marginBottom: '1rem' }}>
             <Col style={{ textAlign: 'center' }}>
-               <Button onClick={async () => {
-                  //Select the required number of random numbers
-                  let randomnumbers = this.selectRandomNumbers();
-                  //Fetch the dog images from the api
-                  await this.fetchDogImages(randomnumbers.randomIndeces);
+               <Button onClick={() => {
+                  this.setState({ loading: true, selected: false, dogImages: [] }, async () => {
+                     //Select the required number of random numbers
+                     let randomnumbers = this.selectRandomNumbers();
+                     //Fetch the dog images from the api
+                     await this.fetchDogImages(randomnumbers.randomIndeces);
+                  })
                }}>Continue</Button>
             </Col>
          </Row>
@@ -188,10 +204,33 @@ class PlayPage extends Component<Props, State> {
          <Container>
             {this.printScore()}
             {this.state.selected ? this.continue() : <></>}
+            {
+               this.state.loading ?
+                  <Container className="text-center">
+                     <Spinner animation="border" />
+                  </Container>
+                  :
+                  <></>
+            }
             {this.printDogImages(this.state.dogImages)}
          </Container>
       )
    }
 }
 
-export default PlayPage
+interface StateRedux {
+   highscore: HighScore
+}
+
+const mapStateToProps = (state: StateRedux) => {
+   const { highscore } = state;
+   return { highscore };
+};
+
+const mapDispatchToProps = (dispatch: any) => (
+   bindActionCreators({
+      setHighScore
+   }, dispatch)
+);
+
+export default connect(mapStateToProps, mapDispatchToProps)(PlayPage);
