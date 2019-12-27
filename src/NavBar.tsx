@@ -16,12 +16,10 @@ class NavBar extends Component<Props, {}> {
     render() {
         return (
             <Navbar style={{ backgroundColor: 'rgb(240, 240, 255)' }} className="justify-content-between pl-4 pr-4" fixed="top">
+                <Navbar.Brand href="/">
+                    Dog Breed Game
+                </Navbar.Brand>
                 <Nav>
-                    <Link to="/">
-                        <h5 style={{ color: '#666' }}>Dog Breed Game</h5>
-                    </Link>
-                </Nav>
-                <Nav className="">
                     <Navbar.Text>
                         High Score: {this.props.highscore.score}
                     </Navbar.Text>

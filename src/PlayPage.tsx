@@ -20,6 +20,7 @@ interface State {
    randomIndeces: Array<number>,
    borderColors: Array<string>,
    selectedBreedName: string,
+   showContinue: boolean,
    selectedDogIndex: number,
    selected: boolean
 }
@@ -44,6 +45,7 @@ class PlayPage extends Component<Props, State> {
          rounds: 0,
          streak: 0,
          selectedBreedName: '',
+         showContinue: false,
          borderColors: [],
          dogImages: [],
          randomIndeces: []
@@ -101,7 +103,8 @@ class PlayPage extends Component<Props, State> {
       }
       let selectedDogIndex = Math.floor(Math.random() * randomIndeces.length);
       let selectedBreedName = this.state.dogs[randomIndeces[selectedDogIndex]];
-      this.setState({ dogImages, borderColors, selectedDogIndex, selectedBreedName })
+      let showContinue = false;     //Do not show the continue button while loading
+      this.setState({ dogImages, borderColors, selectedDogIndex, selectedBreedName, showContinue })
    }
 
    printDogImages = (images: Array<string>) => {      //The component to print the dog images
@@ -131,7 +134,11 @@ class PlayPage extends Component<Props, State> {
                               if (streak % 5 === 0) {
                                  rows++;
                               }
-                              this.setState({ borderColors, selected, rounds, score, streak, rows })
+                              this.setState({ borderColors, selected, rounds, score, streak, rows }, () => {
+                                 setTimeout(() => {
+                                    this.continue();
+                                 }, 1000)
+                              })
                            }
                            else {
                               let borderColors = [...this.state.borderColors];
@@ -139,7 +146,8 @@ class PlayPage extends Component<Props, State> {
                               borderColors[this.state.selectedDogIndex] = '#00ff00';   //Make selected image's border green
                               let selected = true;          //Stop user from selecting another image
                               let streak = 0;
-                              this.setState({ borderColors, selected, rounds, streak })
+                              let showContinue = true;
+                              this.setState({ borderColors, selected, rounds, streak, showContinue })
                            }
                         }
                      }} className="img-responsive" width={200} height={200} src={item} alt="dog" style={this.state.borderColors[index] === '' ? { cursor: 'pointer' } : { borderWidth: 6, borderRadius: 12, borderStyle: 'solid', borderColor: this.state.borderColors[index] }} />
@@ -153,7 +161,7 @@ class PlayPage extends Component<Props, State> {
 
    printScore = () => {
       return (
-         <Col className="mb-4">
+         <Col className="mb-2">
             <Row className="justify-content-center">
                <h6 style={{ marginRight: '1rem' }}>
                   Score: {this.state.score}
@@ -183,16 +191,20 @@ class PlayPage extends Component<Props, State> {
    }
 
    continue = () => {
+      this.setState({ loading: true, selected: false, dogImages: [] }, async () => {
+         //Select the required number of random numbers
+         let randomnumbers = this.selectRandomNumbers();
+         //Fetch the dog images from the api
+         await this.fetchDogImages(randomnumbers.randomIndeces);
+      });
+   }
+
+   continueButton = () => {
       return (
-         <Row style={{ marginBottom: '1rem' }}>
+         <Row style={{ marginBottom: '2rem' }}>
             <Col style={{ textAlign: 'center' }}>
                <Button onClick={() => {
-                  this.setState({ loading: true, selected: false, dogImages: [] }, async () => {
-                     //Select the required number of random numbers
-                     let randomnumbers = this.selectRandomNumbers();
-                     //Fetch the dog images from the api
-                     await this.fetchDogImages(randomnumbers.randomIndeces);
-                  })
+                  this.continue()
                }}>Continue</Button>
             </Col>
          </Row>
@@ -203,7 +215,7 @@ class PlayPage extends Component<Props, State> {
       return (
          <Container>
             {this.printScore()}
-            {this.state.selected ? this.continue() : <></>}
+            {this.state.showContinue && !this.state.loading ? this.continueButton() : <></>}
             {
                this.state.loading ?
                   <Container className="text-center">
