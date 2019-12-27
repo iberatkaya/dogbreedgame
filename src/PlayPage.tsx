@@ -273,7 +273,7 @@ class PlayPage extends Component<Props, State> {
       for (let i = 1; i <= this.state.dogImages.length; i++) {
          str += keyMap["select" + i.toString()] + (i !== this.state.dogImages.length ? ", " : "");
       }
-      str += " to use hotkeys";
+      str += " to use hotkeys!";
       return str;
    }
 
