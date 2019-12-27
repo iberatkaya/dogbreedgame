@@ -6,6 +6,7 @@ import Spinner from 'react-bootstrap/Spinner';
 import Button from 'react-bootstrap/Button';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
+import { GlobalHotKeys } from 'react-hotkeys';
 import { HighScore, setHighScore } from './Actions';
 
 
@@ -26,9 +27,37 @@ interface State {
 }
 
 interface Props {
-   highscore: {score: number},
+   highscore: { score: number },
    setHighScore: (arg: number) => void
 }
+
+interface LooseObject {
+   [key: string]: any
+}
+
+const keyMap = {        //Total hotkeys available
+   select1: "1",
+   select2: "2",
+   select3: "3",
+   select4: "4",
+   select5: "5",
+   select6: "6",
+   select7: "7",
+   select8: "8",
+   select9: "9",
+   select10: "0",
+   select11: "q",
+   select12: "w",
+   select13: "e",
+   select14: "r",
+   select15: "t",
+   select16: "y",
+   select17: "u",
+   select18: "i",
+   select19: "o",
+   select20: "p",
+   select21: "a"
+};
 
 class PlayPage extends Component<Props, State> {
 
@@ -113,50 +142,56 @@ class PlayPage extends Component<Props, State> {
             images.map((item, index) => {
                return (
                   <Col key={index.toString()} md={4} style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
-                     <img 
-                        onLoad = {() => {
+                     <img
+                        onLoad={() => {
                            let loading = false;
-                           this.setState({loading});
-                        }} 
-                     onClick={() => {
-                        if (!this.state.selected) {
-                           let rounds = this.state.rounds + 1;    //Update rounds played
-                           if (this.state.selectedDogIndex === index) {         //If answer if correct
-                              let borderColors = [...this.state.borderColors];
-                              borderColors[index] = '#00ff00';       //Make selected image's border green
-                              let selected = true;             //Stop user from selecting another image
-                              let score = this.state.score + 1;    //Update score
-                              let streak = this.state.streak + 1;
-                              let highscore = this.props.highscore.score;
-                              if(highscore < score)
-                                 this.props.setHighScore(score);
-                              let rows = this.state.rows;
-                              if (streak % 5 === 0) {
-                                 rows++;
-                              }
-                              this.setState({ borderColors, selected, rounds, score, streak, rows }, () => {
-                                 setTimeout(() => {
-                                    this.continue();
-                                 }, 1000)
-                              })
-                           }
-                           else {
-                              let borderColors = [...this.state.borderColors];
-                              borderColors[index] = '#ff0000';       //Make selected image's border red
-                              borderColors[this.state.selectedDogIndex] = '#00ff00';   //Make selected image's border green
-                              let selected = true;          //Stop user from selecting another image
-                              let streak = 0;
-                              let showContinue = true;
-                              this.setState({ borderColors, selected, rounds, streak, showContinue })
-                           }
-                        }
-                     }} className="img-responsive" width={200} height={200} src={item} alt="dog" style={this.state.borderColors[index] === '' ? { cursor: 'pointer' } : { borderWidth: 6, borderRadius: 12, borderStyle: 'solid', borderColor: this.state.borderColors[index] }} />
+                           this.setState({ loading });
+                        }}
+                        onClick={() => {
+                           this.selectImage(index);
+                        }} className="img-responsive" width={200} height={200} src={item} alt="dog" style={this.state.borderColors[index] === '' ? { cursor: 'pointer' } : { borderWidth: 6, borderRadius: 12, borderStyle: 'solid', borderColor: this.state.borderColors[index] }} />
                      {/*index === this.state.selectedDogIndex ? <p>Selected</p> : <></>*/}
                   </Col>
                )
             })}
          </Row>
       )
+   }
+
+   selectImage = (index: number) => {
+      if(index > this.state.dogImages.length)
+         return;
+      if (!this.state.selected) {
+         let rounds = this.state.rounds + 1;    //Update rounds played
+         if (this.state.selectedDogIndex === index) {         //If answer if correct
+            let borderColors = [...this.state.borderColors];
+            borderColors[index] = '#00ff00';       //Make selected image's border green
+            let selected = true;             //Stop user from selecting another image
+            let score = this.state.score + 1;    //Update score
+            let streak = this.state.streak + 1;
+            let highscore = this.props.highscore.score;
+            if (highscore < score)
+               this.props.setHighScore(score);
+            let rows = this.state.rows;
+            if (streak % 5 === 0) {
+               rows++;
+            }
+            this.setState({ borderColors, selected, rounds, score, streak, rows }, () => {
+               setTimeout(() => {
+                  this.continue();
+               }, 1000)
+            })
+         }
+         else {
+            let borderColors = [...this.state.borderColors];
+            borderColors[index] = '#ff0000';       //Make selected image's border red
+            borderColors[this.state.selectedDogIndex] = '#00ff00';   //Make selected image's border green
+            let selected = true;          //Stop user from selecting another image
+            let streak = 0;
+            let showContinue = true;
+            this.setState({ borderColors, selected, rounds, streak, showContinue })
+         }
+      }
    }
 
    printScore = () => {
@@ -211,9 +246,22 @@ class PlayPage extends Component<Props, State> {
       )
    }
 
+
+   handlers = () => {            //Dynamically create the hotkey handlers 
+      let obj: LooseObject = {};
+      for(let i=1; i<=Object.entries(keyMap).length; i++){
+         console.log("select" + (i).toString());
+         console.log(obj["select" + (i).toString()] = () => this.selectImage(i-1));
+         obj["select" + (i).toString()] = () => this.selectImage(i-1);
+      }
+      console.log(obj);
+      return obj;
+   }
+
    render() {
       return (
          <Container>
+         <GlobalHotKeys keyMap={keyMap} handlers={this.handlers()} />
             {this.printScore()}
             {this.state.showContinue && !this.state.loading ? this.continueButton() : <></>}
             {
