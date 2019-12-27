@@ -35,7 +35,8 @@ interface LooseObject {
    [key: string]: any
 }
 
-const keyMap = {        //Total hotkeys available
+const keyMap: LooseObject = {        //Total hotkeys available
+   continue: "enter",
    select1: "1",
    select2: "2",
    select3: "3",
@@ -159,7 +160,7 @@ class PlayPage extends Component<Props, State> {
    }
 
    selectImage = (index: number) => {
-      if(index > this.state.dogImages.length)
+      if (index > this.state.dogImages.length)
          return;
       if (!this.state.selected) {
          let rounds = this.state.rounds + 1;    //Update rounds played
@@ -215,11 +216,18 @@ class PlayPage extends Component<Props, State> {
             {this.state.loading ?
                <></>
                :
-               <Row className="justify-content-center">
-                  <h6>
-                     Breed: {this.state.selectedBreedName[0].toUpperCase() + this.state.selectedBreedName.substring(1)}
-                  </h6>
-               </Row>
+               <>
+                  <Row className="justify-content-center">
+                     <h6>
+                        Breed: {this.state.selectedBreedName[0].toUpperCase() + this.state.selectedBreedName.substring(1)}
+                     </h6>
+                  </Row>
+                  <Row className="justify-content-center">
+                     <p style={{ fontSize: '1.2rem' }} className="lead">
+                        {this.help()}
+                     </p>
+                  </Row>
+               </>
             }
          </Col>
       );
@@ -248,20 +256,31 @@ class PlayPage extends Component<Props, State> {
 
 
    handlers = () => {            //Dynamically create the hotkey handlers 
-      let obj: LooseObject = {};
-      for(let i=1; i<=Object.entries(keyMap).length; i++){
-         console.log("select" + (i).toString());
-         console.log(obj["select" + (i).toString()] = () => this.selectImage(i-1));
-         obj["select" + (i).toString()] = () => this.selectImage(i-1);
+      let obj: LooseObject = {
+         continue: () => {
+            if(this.state.selected)
+               this.continue()
+         }
+      };
+      for (let i = 1; i <= Object.entries(keyMap).length; i++) {
+         obj["select" + (i).toString()] = () => this.selectImage(i - 1);
       }
-      console.log(obj);
       return obj;
+   }
+
+   help = () => {
+      let str = "Press ";
+      for (let i = 1; i <= this.state.dogImages.length; i++) {
+         str += keyMap["select" + i.toString()] + (i !== this.state.dogImages.length ? ", " : "");
+      }
+      str += " to use hotkeys";
+      return str;
    }
 
    render() {
       return (
          <Container>
-         <GlobalHotKeys keyMap={keyMap} handlers={this.handlers()} />
+            <GlobalHotKeys keyMap={keyMap} handlers={this.handlers()} />
             {this.printScore()}
             {this.state.showContinue && !this.state.loading ? this.continueButton() : <></>}
             {
